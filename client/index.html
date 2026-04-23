@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Screener</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body, #root {
+      width: 100%;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+      height: 100vh;
+    }
+
+    .sidebar {
+      width: 280px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 24px;
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .upload-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .dropzone {
+      border: 2px dashed #667eea;
+      border-radius: 8px;
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: #f8f9ff;
+    }
+
+    .dropzone:hover {
+      background: #f0f2ff;
+      border-color: #764ba2;
+    }
+
+    .dropzone.dragover {
+      background: #e8ebff;
+      border-color: #764ba2;
+      transform: scale(1.02);
+    }
+
+    .dropzone input {
+      display: none;
+    }
+
+    .dropzone-text {
+      color: #667eea;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .dropzone-label {
+      color: #666;
+      font-size: 13px;
+    }
+
+    .files-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .file-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #e8ebff;
+      color: #667eea;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .file-chip button {
+      background: none;
+      border: none;
+      color: #667eea;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .file-chip button:hover {
+      color: #764ba2;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: auto;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .btn-secondary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .results-container {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .resume-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .resume-card.top-match {
+      border: 2px solid #ffc107;
+      background: #fffef5;
+    }
+
+    .resume-card:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .resume-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .rank-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: #667eea;
+      color: white;
+      border-radius: 50%;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .resume-title {
+      flex: 1;
+    }
+
+    .resume-name {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 4px;
+    }
+
+    .resume-score {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .score-value {
+      font-size: 18px;
+      font-weight: bold;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .score-bar {
+      width: 100%;
+      height: 6px;
+      background: #e0e0e0;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .score-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      transition: width 0.3s ease;
+      border-radius: 3px;
+    }
+
+    .keywords-section {
+      margin-top: 12px;
+    }
+
+    .keywords-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .keywords-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .keyword-pill {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-weight: 500;
+    }
+
+    .keyword-matched {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .keyword-missing {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .excerpt {
+      font-size: 12px;
+      color: #666;
+      margin-top: 12px;
+      padding: 8px;
+      background: #f9f9f9;
+      border-left: 3px solid #667eea;
+      border-radius: 4px;
+      line-height: 1.4;
+      max-height: 60px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 200px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e0e0e0;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .sidebar-header {
+      font-size: 14px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .history-item {
+      padding: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+      font-size: 13px;
+    }
+
+    .history-item:hover {
+      background: #f0f2ff;
+      border-color: #667eea;
+    }
+
+    .history-item-title {
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item-meta {
+      font-size: 11px;
+      color: #999;
+    }
+
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      border-left: 4px solid #dc3545;
+    }
+
+    .success-message {
+      background: #d4edda;
+      color: #155724;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      font-size: 13px;
+      border-left: 4px solid #28a745;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+
+    .empty-state-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+
+    .empty-state-text {
+      font-size: 14px;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 20px;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 1024px) {
+      .container {
+        flex-direction: column;
+        height: auto;
+      }
+
+      .sidebar {
+        width: 100%;
+        max-height: 200px;
+      }
+
+      .main-content {
+        min-height: 500px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    function App() {
+      const [state, setState] = useState('idle'); // idle | loading | results
+      const [error, setError] = useState('');
+      const [jdFile, setJdFile] = useState(null);
+      const [resumeFiles, setResumeFiles] = useState([]);
+      const [results, setResults] = useState(null);
+      const [history, setHistory] = useState([]);
+      const [selectedHistory, setSelectedHistory] = useState(null);
+
+      useEffect(() => {
+        fetchHistory();
+      }, []);
+
+      const fetchHistory = async () => {
+        try {
+          const response = await fetch('/api/history');
+          if (response.ok) {
+            const data = await response.json();
+            setHistory(data);
+          }
+        } catch (err) {
+          console.error('Failed to fetch history:', err);
+        }
+      };
+
+      const handleAnalyze = async () => {
+        if (!jdFile || resumeFiles.length === 0) {
+          setError('Please upload both job description and at least one resume');
+          return;
+        }
+
+        setState('loading');
+        setError('');
+
+        try {
+          const formData = new FormData();
+          formData.append('jd', jdFile);
+          resumeFiles.forEach((file) => {
+            formData.append('resumes', file);
+          });
+
+          const response = await fetch('/api/analyze', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error('Analysis failed');
+          }
+
+          const data = await response.json();
+          setResults(data);
+          setState('results');
+          setSelectedHistory(null);
+          fetchHistory();
+        } catch (err) {
+          setError(err.message || 'Analysis failed');
+          setState('idle');
+        }
+      };
+
+      const handleNewAnalysis = () => {
+        setJdFile(null);
+        setResumeFiles([]);
+        setResults(null);
+        setState('idle');
+        setError('');
+        setSelectedHistory(null);
+      };
+
+      const handleHistorySelect = async (historyId) => {
+        try {
+          const response = await fetch(`/api/history/${historyId}`);
+          if (response.ok) {
+            const data = await response.json();
+            setResults({
+              analysisId: data.id,
+              rankedResumes: data.rankedResumes,
+              timestamp: data.timestamp,
+            });
+            setState('results');
+            setSelectedHistory(historyId);
+          }
+        } catch (err) {
+          setError('Failed to load analysis');
+        }
+      };
+
+      return (
+        <div className="container">
+          <div className="sidebar">
+            <div className="sidebar-header">📋 Recent Analysis</div>
+            <div className="history-list">
+              {history.length === 0 ? (
+                <div className="empty-state-text" style={{ padding: '20px 0' }}>
+                  No analyses yet
+                </div>
+              ) : (
+                history.map((item) => (
+                  <div
+                    key={item.id}
+                    className={`history-item ${selectedHistory === item.id ? 'selected' : ''}`}
+                    onClick={() => handleHistorySelect(item.id)}
+                    style={{
+                      background: selectedHistory === item.id ? '#f0f2ff' : 'transparent',
+                      borderColor: selectedHistory === item.id ? '#667eea' : 'transparent',
+                    }}
+                  >
+                    <div className="history-item-title">{item.jobTitle}</div>
+                    <div className="history-item-meta">
+                      {item.resumeCount} resumes | Score: {item.topScore.toFixed(1)}
+                    </div>
+                    <div className="history-item-meta">
+                      {new Date(item.timestamp).toLocaleDateString()}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="main-content">
+            <h1>🎯 Resume Screener</h1>
+
+            {state === 'idle' && (
+              <UploadForm
+                jdFile={jdFile}
+                setJdFile={setJdFile}
+                resumeFiles={resumeFiles}
+                setResumeFiles={setResumeFiles}
+                onAnalyze={handleAnalyze}
+                error={error}
+                setError={setError}
+              />
+            )}
+
+            {state === 'loading' && (
+              <div className="card">
+                <div className="loading">
+                  <div className="spinner"></div>
+                </div>
+                <p style={{ textAlign: 'center', marginTop: '16px', color: '#666' }}>
+                  Analyzing resumes...
+                </p>
+              </div>
+            )}
+
+            {state === 'results' && results && (
+              <ResultsPanel
+                results={results}
+                onNewAnalysis={handleNewAnalysis}
+              />
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    function UploadForm({
+      jdFile,
+      setJdFile,
+      resumeFiles,
+      setResumeFiles,
+      onAnalyze,
+      error,
+      setError,
+    }) {
+      const jdInputRef = useRef(null);
+      const resumeInputRef = useRef(null);
+
+      const handleJdDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.dataTransfer.files.length > 0) {
+          setJdFile(e.dataTransfer.files[0]);
+          setError('');
+        }
+      };
+
+      const handleResumeDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const files = Array.from(e.dataTransfer.files).slice(0, 10 - resumeFiles.length);
+        setResumeFiles([...resumeFiles, ...files]);
+        setError('');
+      };
+
+      const handleDragOver = (e) => {
+        e.preventDefault();
+        e.currentTarget.classList.add('dragover');
+      };
+
+      const handleDragLeave = (e) => {
+        e.currentTarget.classList.remove('dragover');
+      };
+
+      const removeResume = (index) => {
+        setResumeFiles(resumeFiles.filter((_, i) => i !== index));
+      };
+
+      return (
+        <div className="card upload-section">
+          {error && <div className="error-message">{error}</div>}
+
+          <div>
+            <h3 style={{ marginBottom: '12px', fontSize: '16px', color: '#333' }}>
+              Job Description
+            </h3>
+            <div
+              className="dropzone"
+              onDrop={handleJdDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onClick={() => jdInputRef.current?.click()}
+            >
+              <div className="dropzone-text">
+                {jdFile ? '✓ ' + jdFile.name : '📄 Drop or click to upload'}
+              </div>
+              <div className="dropzone-label">PDF, DOCX, or TXT (max 5MB)</div>
+              <input
+                ref={jdInputRef}
+                type="file"
+                accept=".pdf,.docx,.txt"
+                onChange={(e) => {
+                  if (e.target.files[0]) {
+                    setJdFile(e.target.files[0]);
+                    setError('');
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <h3 style={{ marginBottom: '12px', fontSize: '16px', color: '#333' }}>
+              Resumes ({resumeFiles.length}/10)
+            </h3>
+            <div
+              className="dropzone"
+              onDrop={handleResumeDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onClick={() => resumeInputRef.current?.click()}
+            >
+              <div className="dropzone-text">
+                {resumeFiles.length === 0
+                  ? '📄 Drop or click to upload'
+                  : '✓ Ready to add more'}
+              </div>
+              <div className="dropzone-label">
+                Up to 10 files (PDF, DOCX, or TXT, max 5MB each)
+              </div>
+              <input
+                ref={resumeInputRef}
+                type="file"
+                multiple
+                accept=".pdf,.docx,.txt"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []).slice(
+                    0,
+                    10 - resumeFiles.length
+                  );
+                  setResumeFiles([...resumeFiles, ...files]);
+                  setError('');
+                }}
+              />
+            </div>
+
+            {resumeFiles.length > 0 && (
+              <div className="files-container" style={{ marginTop: '12px' }}>
+                {resumeFiles.map((file, idx) => (
+                  <div key={idx} className="file-chip">
+                    <span>{file.name}</span>
+                    <button onClick={() => removeResume(idx)}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="button-group">
+            <button
+              className="btn-primary"
+              onClick={onAnalyze}
+              disabled={!jdFile || resumeFiles.length === 0}
+            >
+              🚀 Analyze Resumes
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    function ResultsPanel({ results, onNewAnalysis }) {
+      const topMatch = results.rankedResumes[0];
+
+      return (
+        <div className="card results-container">
+          <div style={{ marginBottom: '16px' }}>
+            <button className="btn-secondary" onClick={onNewAnalysis}>
+              ← New Analysis
+            </button>
+          </div>
+
+          {results.rankedResumes.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">📭</div>
+              <div className="empty-state-text">No resumes analyzed</div>
+            </div>
+          ) : (
+            results.rankedResumes.map((resume, idx) => (
+              <div
+                key={idx}
+                className={`resume-card ${idx === 0 ? 'top-match' : ''}`}
+              >
+                <div className="resume-header">
+                  <div className="rank-badge">{idx + 1}</div>
+                  <div className="resume-title">
+                    <div className="resume-name">{resume.filename}</div>
+                  </div>
+                  <div className="resume-score">
+                    <div className="score-value">{resume.score.toFixed(1)}/100</div>
+                  </div>
+                </div>
+
+                <div className="score-bar">
+                  <div
+                    className="score-fill"
+                    style={{ width: `${Math.min(resume.score, 100)}%` }}
+                  ></div>
+                </div>
+
+                {resume.matched && resume.matched.length > 0 && (
+                  <div className="keywords-section">
+                    <div className="keywords-label">✓ Matched Skills</div>
+                    <div className="keywords-list">
+                      {resume.matched.slice(0, 8).map((kw, i) => (
+                        <span key={i} className="keyword-pill keyword-matched">
+                          {kw}
+                        </span>
+                      ))}
+                      {resume.matched.length > 8 && (
+                        <span className="keyword-pill keyword-matched">
+                          +{resume.matched.length - 8}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {resume.missing && resume.missing.length > 0 && (
+                  <div className="keywords-section">
+                    <div className="keywords-label">✗ Missing Skills</div>
+                    <div className="keywords-list">
+                      {resume.missing.slice(0, 5).map((kw, i) => (
+                        <span key={i} className="keyword-pill keyword-missing">
+                          {kw}
+                        </span>
+                      ))}
+                      {resume.missing.length > 5 && (
+                        <span className="keyword-pill keyword-missing">
+                          +{resume.missing.length - 5}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {resume.excerpt && (
+                  <div className="excerpt">
+                    <strong>Preview:</strong> {resume.excerpt}...
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
